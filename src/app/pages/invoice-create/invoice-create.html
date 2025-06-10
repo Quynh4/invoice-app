@@ -1,51 +1,38 @@
 <h2>Tạo hóa đơn</h2>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Editor</title>
+       
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; color: #333; margin-bottom: 30px;">Invoice Editor</h1>
+        
+        <div class="controls">
+            <label>
+                <span>Upload Watermark:</span>
+                <input type="file" id="watermarkUpload" accept="image/*">
+            </label>
+            <label>
+                <span>Size</span>
+                <input type="range" id="sizeRange" min="50" max="500" value="200">
+                <span class="value-display" id="sizeValue">200px</span>
+            </label>
+            <label>
+                <span>Opacity:</span>
+                <input type="range" id="opacityRange" min="0" max="1" step="0.05" value="0.3">
+                <span class="value-display" id="opacityValue">0.3</span>
+            </label>
+        </div>
+        
+              <iframe #myIframe class="a4-iframe"></iframe>
 
-<!-- Thông tin doanh nghiệp -->
-<h3>🏢 Doanh nghiệp phát hành hóa đơn</h3>
-<p><strong>Tên:</strong> {{ invoice.company.name }}</p>
-<p><strong>Địa chỉ:</strong> {{ invoice.company.address }}</p>
-<p><strong>Mã số thuế:</strong> {{ invoice.company.taxCode }}</p>
-<p><strong>Điện thoại:</strong> {{ invoice.company.phone }}</p>
-
-<hr />
-
-<!-- Thông tin khách hàng -->
-<h3>Thông tin khách hàng</h3>
-<label>Tên:</label><br />
-<input [(ngModel)]="invoice.customer.name" /><br /><br />
-
-<label>Địa chỉ:</label><br />
-<input [(ngModel)]="invoice.customer.address" /><br /><br />
-
-<label>Số điện thoại:</label><br />
-<input [(ngModel)]="invoice.customer.phone" /><br /><br />
-
-<hr />
-
-<!-- Chi tiết sản phẩm/dịch vụ -->
-<h3>Chi tiết sản phẩm/dịch vụ</h3>
-<table border="1" cellpadding="5">
-  <tr>
-    <th>Mô tả</th>
-    <th>Số lượng</th>
-    <th>Đơn giá</th>
-    <th>Thành tiền</th>
-    <th></th>
-  </tr>
-  <tr *ngFor="let item of invoice.items; let i = index">
-    <td><input [(ngModel)]="item.description" /></td>
-    <td><input type="number" [(ngModel)]="item.quantity" /></td>
-    <td><input type="number" [(ngModel)]="item.price" /></td>
-    <td>{{ item.quantity * item.price | number:'1.0-0' }} đ</td>
-    <td><button (click)="removeItem(i)">❌</button></td>
-  </tr>
-</table>
-
-<br />
-<button (click)="addItem()">➕ Thêm dòng</button>
-<br /><br />
-
-<strong>Tổng cộng: {{ getTotal() | number:'1.0-0' }} đ</strong>
-<br /><br />
-
-<button (click)="saveInvoice()">💾 Lưu hóa đơn</button>
+        
+        <div class="print-button">
+            <button onclick="printInvoice()">🖨️ Print Invoice</button>
+            <button onclick="resetWatermark()">🗑️ Remove Watermark</button>
+        </div>
+    </div>

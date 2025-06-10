@@ -1,0 +1,84 @@
+ * {
+     box-sizing: border-box;
+ }
+
+ body {
+     font-family: Arial, sans-serif;
+     margin: 0;
+     padding: 20px;
+     background-color: #f5f5f5;
+ }
+
+ .container {
+     max-width: 100%;
+     margin: 0 auto;
+     background: white;
+     padding: 20px;
+     border-radius: 8px;
+     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+ }
+
+ .controls {
+     margin-bottom: 20px;
+     display: flex;
+     gap: 15px;
+     flex-wrap: wrap;
+     align-items: center;
+     padding: 15px;
+     background: #f8f9fa;
+     border-radius: 6px;
+ }
+
+ .controls label {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     font-size: 14px;
+     font-weight: 500;
+ }
+
+ .controls input[type="file"] {
+     padding: 8px;
+     border: 1px solid #ddd;
+     border-radius: 4px;
+ }
+
+ .controls input[type="range"] {
+     width: 120px;
+ }
+
+ .value-display {
+     min-width: 50px;
+     font-weight: bold;
+     color: #007bff;
+ }
+
+ .a4-iframe {
+     width: 50%;
+     height: 700px;
+     border: 2px solid #ddd;
+     display: block;
+     margin: 0 auto;
+     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+     border-radius: 4px;
+ }
+
+ .print-button {
+     margin-top: 15px;
+     text-align: center;
+ }
+
+ .print-button button {
+     background: #007bff;
+     color: white;
+     border: none;
+     padding: 10px 20px;
+     border-radius: 4px;
+     cursor: pointer;
+     font-size: 14px;
+     margin: 0 5px;
+ }
+
+ .print-button button:hover {
+     background: #0056b3;
+ }

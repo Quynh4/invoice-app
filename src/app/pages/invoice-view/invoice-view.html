@@ -1,0 +1,20 @@
+<h2>Chỉnh sửa hóa đơn</h2>
+
+<table border="1" cellpadding="5">
+  <thead>
+    <tr>
+      <th *ngFor="let col of invoiceData[0] | keyvalue">{{ col.key }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let row of invoiceData; let i = index">
+      <td *ngFor="let col of row | keyvalue">
+        <input [(ngModel)]="invoiceData[i][col.key]" />
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<br />
+<button (click)="save()">💾 Lưu</button>
+<button (click)="print()">🖨 In</button>

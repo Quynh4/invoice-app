@@ -1,0 +1,26 @@
+<h2>Danh sách hóa đơn</h2>
+
+<table border="1" cellpadding="5">
+  <thead>
+    <tr>
+      <th>STT</th>
+      <th>Ngày tạo</th>
+      <th>Số dòng</th>
+      <th>Hành động</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let invoice of invoices; index as i">
+      <td>{{ i + 1 }}</td>
+      <td>{{ invoice.createdAt | date:'short' }}</td>
+      <td>{{ invoice.data.length }}</td>
+      <td>
+        <button (click)="viewInvoice(i)">Xem/Sửa</button>
+        <button (click)="deleteInvoice(i)">🗑 Xóa</button>
+      </td>
+      <td><a [routerLink]="['/invoice-detail', invoice.id]">Xem chi tiết</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p *ngIf="invoices.length === 0">Không có hóa đơn nào.</p>

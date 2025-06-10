@@ -1,0 +1,29 @@
+<h2>Thông tin doanh nghiệp</h2>
+
+<form (ngSubmit)="saveBusinessInfo()">
+  <label>
+    Tên doanh nghiệp:
+    <input type="text" [(ngModel)]="business.name" name="name" required>
+  </label>
+  <br>
+
+  <label>
+    Địa chỉ:
+    <input type="text" [(ngModel)]="business.address" name="address">
+  </label>
+  <br>
+
+  <label>
+    Mã số thuế:
+    <input type="text" [(ngModel)]="business.taxCode" name="taxCode">
+  </label>
+  <br>
+
+  <label>
+    Logo (URL):
+    <input type="text" [(ngModel)]="business.logoUrl" name="logoUrl">
+  </label>
+  <br>
+
+  <button type="submit">Lưu</button>
+</form>

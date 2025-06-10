@@ -1,0 +1,24 @@
+<h2>Thông tin doanh nghiệp</h2>
+
+<form (ngSubmit)="save()">
+  <label>Tên công ty:</label><br />
+  <input [(ngModel)]="company.name" name="name" /><br /><br />
+
+  <label>Địa chỉ:</label><br />
+  <input [(ngModel)]="company.address" name="address" /><br /><br />
+
+  <label>Mã số thuế:</label><br />
+  <input [(ngModel)]="company.taxId" name="taxId" /><br /><br />
+
+  <label>Số điện thoại:</label><br />
+  <input [(ngModel)]="company.phone" name="phone" /><br /><br />
+
+  <label>Logo công ty (tuỳ chọn):</label><br />
+  <input type="file" (change)="onLogoUpload($event)" /><br /><br />
+  <div *ngIf="company.logoBase64">
+    <img [src]="company.logoBase64" alt="Logo" width="100" />
+  </div>
+
+  <br />
+  <button type="submit">💾 Lưu thông tin</button>
+</form>

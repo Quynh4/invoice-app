@@ -1,0 +1,43 @@
+<div *ngIf="invoice" class="invoice-container">
+  <h2>Hóa đơn #{{ invoice.id }}</h2>
+
+  <h3>📌 Doanh nghiệp</h3>
+  <p><strong>{{ invoice.company.name }}</strong></p>
+  <p>Địa chỉ: {{ invoice.company.address }}</p>
+  <p>Điện thoại: {{ invoice.company.phone }}</p>
+  <p>MST: {{ invoice.company.taxId }}</p>
+  <img *ngIf="invoice.company.logoBase64" [src]="invoice.company.logoBase64" width="100" />
+
+  <hr />
+
+  <h3>👤 Khách hàng</h3>
+  <p>Tên: {{ invoice.customer.name }}</p>
+  <p>Địa chỉ: {{ invoice.customer.address }}</p>
+  <p>Điện thoại: {{ invoice.customer.phone }}</p>
+
+  <hr />
+
+  <h3>🧾 Chi tiết hóa đơn</h3>
+  <table border="1" cellpadding="5" cellspacing="0">
+    <tr>
+      <th>STT</th>
+      <th>Mô tả</th>
+      <th>Số lượng</th>
+      <th>Đơn giá</th>
+      <th>Thành tiền</th>
+    </tr>
+    <tr *ngFor="let item of invoice.items; let i = index">
+      <td>{{ i + 1 }}</td>
+      <td>{{ item.description }}</td>
+      <td>{{ item.quantity }}</td>
+      <td>{{ item.price | number:'1.0-0' }} đ</td>
+      <td>{{ item.quantity * item.price | number:'1.0-0' }} đ</td>
+    </tr>
+  </table>
+
+  <h3 style="text-align:right;">Tổng cộng: {{ invoice.total | number:'1.0-0' }} đ</h3>
+
+  <br />
+  <button (click)="print()">🖨️ In hóa đơn</button>
+  <button (click)="editInvoice()">✏️ Chỉnh sửa hóa đơn</button>
+</div>

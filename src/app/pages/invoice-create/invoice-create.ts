@@ -34,6 +34,8 @@ interface FormData {
 @Component({
   selector: 'app-iframe',
   templateUrl: './invoice-create.html',
+  standalone: true,
+  imports: [],
 
   styles: [`
     .container {
@@ -99,6 +101,8 @@ export class InvoiceCreateComponent implements AfterViewInit {
     // Delay để đảm bảo view đã render xong
     setTimeout(() => {
       this.loadIframeContent();
+
+      document.getElementById('saveBtn')?.addEventListener('click', this.saveInvoiceToServer.bind(this));
     }, 100);
   }
 
@@ -580,6 +584,38 @@ setupColumnResize(doc: Document) {
       watermark.style.opacity = this.watermarkOpacity.toString();
     }
   }
+
+
+  async saveInvoiceToServer() {
+  const iframe = document.querySelector('.a4-iframe') as HTMLIFrameElement | null;
+
+  if (!iframe || !iframe.contentDocument) {
+    alert("Không tìm thấy nội dung trong iframe!");
+    return;
+  }
+
+  const htmlContent = iframe.contentDocument.documentElement.outerHTML;
+
+  try {
+    const response = await fetch('http://localhost:8080/api/templates', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ html: htmlContent })
+    });
+
+    if (response.ok) {
+      alert("✅ Lưu hóa đơn thành công!");
+    } else {
+      alert("❌ Lỗi khi lưu hóa đơn.");
+    }
+  } catch (error) {
+    console.error("Lỗi:", error);
+    alert("❌ Không thể kết nối đến server.");
+  }
+}
+
 
   // Method để in hóa đơn
   printInvoice() {

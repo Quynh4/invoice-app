@@ -82,3 +82,22 @@
  .print-button button:hover {
      background: #0056b3;
  }
+
+
+ .JCLRgrips {
+  pointer-events: none; /* Để không chặn thao tác bảng nếu chưa cần */
+  z-index: 10;
+}
+
+.JCLRgrip {
+  width: 5px;
+  cursor: col-resize;
+  background-color: transparent;
+  transform: translateX(-2.5px); /* Căn chính giữa đường phân cách */
+}
+
+.JColResizer {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.1); /* Chỉ để thấy, có thể bỏ */
+}

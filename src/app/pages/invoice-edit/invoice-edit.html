@@ -1,27 +1,208 @@
-<h2>✏️ Chỉnh sửa Hóa đơn #{{ invoice.id }}</h2>
+<h2>Chỉnh sửa hóa đơn</h2>
+<!DOCTYPE html>
+<html lang="vi">
 
-<h3>👤 Khách hàng</h3>
-<label>Tên: <input [(ngModel)]="invoice.customer.name" /></label><br />
-<label>Địa chỉ: <input [(ngModel)]="invoice.customer.address" /></label><br />
-<label>Điện thoại: <input [(ngModel)]="invoice.customer.phone" /></label>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Editor - Edit</title>
+</head>
 
-<hr />
+<body>
+    <div class="container">
+        <h1 style="text-align: center; color: #333; margin-bottom: 30px;">Invoice Editor - Chỉnh sửa</h1>
 
-<h3>📦 Sản phẩm</h3>
-<table border="1" cellpadding="5">
-  <tr>
-    <th>Mô tả</th>
-    <th>Số lượng</th>
-    <th>Đơn giá</th>
-  </tr>
-  <tr *ngFor="let item of invoice.items">
-    <td><input [(ngModel)]="item.description" /></td>
-    <td><input type="number" [(ngModel)]="item.quantity" /></td>
-    <td><input type="number" [(ngModel)]="item.price" /></td>
-  </tr>
-</table>
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" style="text-align: center; display: none;">
+            <p>Đang tải dữ liệu...</p>
+        </div>
 
-<h3 style="text-align:right;">Tổng cộng: {{ getTotal() | number:'1.0-0' }} đ</h3>
+        <!-- Error message -->
+        <div id="errorMessage" style="color: red; text-align: center; display: none;">
+        </div>
 
-<br />
-<button (click)="updateInvoice()">💾 Lưu lại</button>
+        <div class="controls">
+            <label>
+                <span>Upload Watermark:</span>
+                <input type="file" id="watermarkUpload" accept="image/*">
+            </label>
+            <label>
+                <span>Size</span>
+                <input type="range" id="sizeRange" min="50" max="500" value="200">
+                <span class="value-display" id="sizeValue">200px</span>
+            </label>
+            <label>
+                <span>Opacity:</span>
+                <input type="range" id="opacityRange" min="0" max="1" step="0.05" value="0.3">
+                <span class="value-display" id="opacityValue">0.3</span>
+            </label>
+        </div>
+
+        <iframe #myIframe class="a4-iframe" id="invoiceIframe"></iframe>
+
+        <div class="print-button">
+            <button onclick="printInvoice()">🖨️ Print Invoice</button>
+            <button onclick="resetWatermark()">🗑️ Remove Watermark</button>
+            <button id="saveBtn">💾 Cập nhật hóa đơn</button>
+        </div>
+    </div>
+
+    <script>
+        function createResizeOverlay(tableId) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            
+            const thead = table.querySelector("thead");
+            if (!thead) return;
+            
+            const headerCells = thead.querySelectorAll("th");
+
+            const tableRect = table.getBoundingClientRect();
+            const grips = document.createElement("div");
+            grips.className = "JCLRgrips";
+            grips.style.position = "relative";
+            grips.style.width = table.offsetWidth + "px";
+            grips.style.height = table.offsetHeight + "px";
+
+            let leftOffset = 0;
+            headerCells.forEach((th, index) => {
+                const rect = th.getBoundingClientRect();
+                const colLeft = th.offsetLeft + th.offsetWidth;
+
+                const grip = document.createElement("div");
+                grip.className = "JCLRgrip";
+                if (index === headerCells.length - 1) {
+                    grip.classList.add("JCLRLastGrip");
+                }
+
+                grip.style.position = "absolute";
+                grip.style.left = colLeft + "px";
+                grip.style.height = table.offsetHeight + "px";
+
+                const resizer = document.createElement("div");
+                resizer.className = "JColResizer";
+
+                grip.appendChild(resizer);
+                grips.appendChild(grip);
+            });
+
+            // Chèn overlay lên trước bảng
+            table.parentNode.insertBefore(grips, table);
+        }
+
+        // Load invoice data when page loads
+        window.onload = () => {
+            loadInvoiceData();
+        };
+
+        function loadInvoiceData() {
+            // Get invoice ID from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const invoiceId = urlParams.get('id');
+            
+            if (!invoiceId) {
+                showError('Không tìm thấy ID hóa đơn trong URL');
+                return;
+            }
+
+            showLoading(true);
+            
+            // Call API to get invoice data
+            fetch(`http://localhost:8080/api/templates/${invoiceId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    showLoading(false);
+                    loadHtmlContentToIframe(data.htmlContent);
+                    
+                    // Initialize resize overlay after content is loaded
+                    setTimeout(() => {
+                        createResizeOverlay("invoiceTable");
+                    }, 500);
+                })
+                .catch(error => {
+                    showLoading(false);
+                    showError('Lỗi khi tải dữ liệu: ' + error.message);
+                    console.error('Error loading invoice data:', error);
+                });
+        }
+
+        function loadHtmlContentToIframe(htmlContent) {
+            const iframe = document.getElementById('invoiceIframe');
+            if (iframe) {
+                // Create a complete HTML document for the iframe
+                const fullHtmlContent = `
+                    <!DOCTYPE html>
+                    <html lang="vi">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Invoice Content</title>
+                        <style>
+                            body { 
+                                font-family: Arial, sans-serif; 
+                                margin: 20px; 
+                                background: white;
+                            }
+                            table { 
+                                border-collapse: collapse; 
+                                width: 100%; 
+                            }
+                            th, td { 
+                                border: 1px solid #ddd; 
+                                padding: 8px; 
+                                text-align: left; 
+                            }
+                            th { 
+                                background-color: #f2f2f2; 
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${htmlContent}
+                    </body>
+                    </html>
+                `;
+                
+                // Write content to iframe
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                iframeDoc.open();
+                iframeDoc.write(fullHtmlContent);
+                iframeDoc.close();
+            }
+        }
+
+        function showLoading(show) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = show ? 'block' : 'none';
+            }
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+        }
+
+        // Print and reset functions (same as original)
+        function printInvoice() {
+            const iframe = document.getElementById('invoiceIframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.print();
+            }
+        }
+
+        function resetWatermark() {
+            // Implementation for watermark reset
+            console.log('Reset watermark functionality');
+        }
+    </script>
+</body>
+</html>

@@ -1,16 +1,18 @@
 <h2>Tạo hóa đơn</h2>
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice Editor</title>
-       
+
 </head>
+
 <body>
     <div class="container">
         <h1 style="text-align: center; color: #333; margin-bottom: 30px;">Invoice Editor</h1>
-        
+
         <div class="controls">
             <label>
                 <span>Upload Watermark:</span>
@@ -27,12 +29,63 @@
                 <span class="value-display" id="opacityValue">0.3</span>
             </label>
         </div>
-        
-              <iframe #myIframe class="a4-iframe"></iframe>
 
-        
+        <iframe #myIframe class="a4-iframe"></iframe>
+
+
         <div class="print-button">
             <button onclick="printInvoice()">🖨️ Print Invoice</button>
             <button onclick="resetWatermark()">🗑️ Remove Watermark</button>
+           <button id="saveBtn">💾 Lưu hóa đơn</button>
+
+
         </div>
     </div>
+
+
+    <script>
+        function createResizeOverlay(tableId) {
+            const table = document.getElementById(tableId);
+            const thead = table.querySelector("thead");
+            const headerCells = thead.querySelectorAll("th");
+
+            const tableRect = table.getBoundingClientRect();
+            const grips = document.createElement("div");
+            grips.className = "JCLRgrips";
+            grips.style.position = "relative";
+            grips.style.width = table.offsetWidth + "px";
+            grips.style.height = table.offsetHeight + "px";
+
+            let leftOffset = 0;
+            headerCells.forEach((th, index) => {
+                const rect = th.getBoundingClientRect();
+                const colLeft = th.offsetLeft + th.offsetWidth;
+
+                const grip = document.createElement("div");
+                grip.className = "JCLRgrip";
+                if (index === headerCells.length - 1) {
+                    grip.classList.add("JCLRLastGrip");
+                }
+
+                grip.style.position = "absolute";
+                grip.style.left = colLeft + "px";
+                grip.style.height = table.offsetHeight + "px";
+
+                const resizer = document.createElement("div");
+                resizer.className = "JColResizer";
+
+                grip.appendChild(resizer);
+                grips.appendChild(grip);
+            });
+
+            // Chèn overlay lên trước bảng
+            table.parentNode.insertBefore(grips, table);
+        }
+
+        // Gọi sau khi DOM sẵn sàng
+        window.onload = () => {
+            createResizeOverlay("invoiceTable");
+        };
+    </script>
+
+<body>

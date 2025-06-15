@@ -1,0 +1,71 @@
+<div class="invoice-editor-container">
+    <!-- Header -->
+    <h2 class="page-title">{{ pageTitle }}</h2>
+
+    <!-- Loading indicator -->
+    <div *ngIf="isLoading" class="loading-indicator">
+        <p>Đang tải dữ liệu...</p>
+    </div>
+
+    <!-- Error message -->
+    <div *ngIf="errorMessage" class="error-message">
+        <p>{{ errorMessage }}</p>
+    </div>
+
+
+    <div class="main-layout">
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+            <div class="control-group">
+                <label for="watermarkUpload">
+                    <span>Upload Watermark:</span>
+                    <input type="file" id="watermarkUpload" accept="image/*" (change)="onWatermarkUpload($event)">
+                </label>
+            </div>
+
+            <div class="control-group">
+                <label for="sizeRange">
+                    <span>Kích thước:</span>
+                    <input type="range" id="sizeRange" min="50" max="500" [value]="watermarkSize"
+                        (input)="onSizeChange($event)">
+                    <span class="value-display">{{ watermarkSize }}px</span>
+                </label>
+            </div>
+
+            <div class="control-group">
+                <label for="opacityRange">
+                    <span>Độ mờ:</span>
+                    <input type="range" id="opacityRange" min="0" max="1" step="0.05" [value]="watermarkOpacity"
+                        (input)="onOpacityChange($event)">
+                    <span class="value-display">{{ watermarkOpacity }}</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Invoice Content Iframe -->
+        <div class="document-container">
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="button" class="btn btn-print" (click)="printInvoice()" [disabled]="isLoading">
+                    🖨️ In hóa đơn
+                </button>
+
+                <button type="button" class="btn btn-reset" (click)="resetWatermark()" [disabled]="isLoading">
+                    🗑️ Xóa watermark
+                </button>
+
+                <button type="button" class="btn btn-save" (click)="saveInvoice()" [disabled]="isLoading">
+                    {{ saveButtonText }}
+                </button>
+            </div>
+            <div class="iframe-container">
+                <iframe #invoiceIframe class="invoice-iframe" [style.display]="isLoading ? 'none' : 'block'">
+                </iframe>
+            </div>
+
+            
+        </div>
+
+    </div>
+</div>

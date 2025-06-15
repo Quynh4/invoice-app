@@ -1,24 +1,175 @@
-<h2>Thông tin doanh nghiệp</h2>
-
-<form (ngSubmit)="save()">
-  <label>Tên công ty:</label><br />
-  <input [(ngModel)]="company.name" name="name" /><br /><br />
-
-  <label>Địa chỉ:</label><br />
-  <input [(ngModel)]="company.address" name="address" /><br /><br />
-
-  <label>Mã số thuế:</label><br />
-  <input [(ngModel)]="company.taxId" name="taxId" /><br /><br />
-
-  <label>Số điện thoại:</label><br />
-  <input [(ngModel)]="company.phone" name="phone" /><br /><br />
-
-  <label>Logo công ty (tuỳ chọn):</label><br />
-  <input type="file" (change)="onLogoUpload($event)" /><br /><br />
-  <div *ngIf="company.logoBase64">
-    <img [src]="company.logoBase64" alt="Logo" width="100" />
+<div class="business-info-container">
+  <!-- Header -->
+  <div class="header">
+    <h1 class="title">
+      <i class="icon-building"></i>
+      Quản lý thông tin doanh nghiệp
+    </h1>
+    <p class="subtitle">Thêm và chỉnh sửa thông tin công ty của bạn</p>
   </div>
 
-  <br />
-  <button type="submit">💾 Lưu thông tin</button>
-</form>
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <i class="icon-check"></i>
+    {{ successMessage }}
+  </div>
+  
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <i class="icon-alert"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Form -->
+  <div class="form-section">
+    <div class="form-header">
+      <h2>{{ isEditing ? 'Chỉnh sửa thông tin' : 'Thêm công ty mới' }}</h2>
+      <button *ngIf="isEditing" type="button" class="btn btn-secondary" (click)="resetForm()">
+        <i class="icon-plus"></i>
+        Thêm mới
+      </button>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="company-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="name" class="required">Tên doanh nghiệp</label>
+          <input 
+            type="text" 
+            id="name"
+            [(ngModel)]="currentCompany.name" 
+            name="name" 
+            class="form-input"
+            placeholder="Nhập tên công ty"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label for="taxCode" class="required">Mã số thuế</label>
+          <input 
+            type="text" 
+            id="taxCode"
+            [(ngModel)]="currentCompany.taxCode" 
+            name="taxCode"
+            class="form-input"
+            placeholder="Nhập mã số thuế"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Số điện thoại</label>
+          <input 
+            type="tel" 
+            id="phone"
+            [(ngModel)]="currentCompany.phone" 
+            name="phone"
+            class="form-input"
+            placeholder="Nhập số điện thoại">
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input 
+            type="email" 
+            id="email"
+            [(ngModel)]="currentCompany.email" 
+            name="email"
+            class="form-input"
+            placeholder="Nhập địa chỉ email">
+        </div>
+
+        <div class="form-group full-width">
+          <label for="address">Địa chỉ</label>
+          <textarea 
+            id="address"
+            [(ngModel)]="currentCompany.address" 
+            name="address"
+            class="form-textarea"
+            placeholder="Nhập địa chỉ công ty"
+            rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="!isFormValid() || loading">
+          <i class="icon-save"></i>
+          <span *ngIf="!loading">{{ isEditing ? 'Cập nhật' : 'Lưu thông tin' }}</span>
+          <span *ngIf="loading">Đang xử lý...</span>
+        </button>
+        
+        <button 
+          type="button" 
+          class="btn btn-secondary"
+          (click)="resetForm()"
+          *ngIf="isEditing">
+          <i class="icon-cancel"></i>
+          Hủy
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Company List -->
+  <div class="list-section" *ngIf="companies.length > 0">
+    <h2>Danh sách công ty</h2>
+    
+    <div class="company-grid">
+      <div 
+        *ngFor="let company of companies" 
+        class="company-card"
+        [class.editing]="editingId === company.id">
+        
+        <div class="company-header">
+          <h3>{{ company.name }}</h3>
+          <div class="company-actions">
+            <button 
+              class="btn btn-sm btn-outline" 
+              (click)="editCompany(company)"
+              title="Chỉnh sửa">
+              <i class="icon-edit"></i>
+            </button>
+            <button 
+              class="btn btn-sm btn-danger" 
+              (click)="deleteCompany(company.id!)"
+              title="Xóa">
+              <i class="icon-delete"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="company-details">
+          <div class="detail-item" *ngIf="company.taxCode">
+            <strong>MST:</strong> {{ company.taxCode }}
+          </div>
+          <div class="detail-item" *ngIf="company.phone">
+            <strong>ĐT:</strong> {{ company.phone }}
+          </div>
+          <div class="detail-item" *ngIf="company.email">
+            <strong>Email:</strong> {{ company.email }}
+          </div>
+          <div class="detail-item" *ngIf="company.address">
+            <strong>Địa chỉ:</strong> {{ company.address }}
+          </div>
+          <div class="detail-item" *ngIf="company.createdAt">
+            <strong>Ngày tạo:</strong> {{ company.createdAt | date:'dd/MM/yyyy HH:mm' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="companies.length === 0 && !loading">
+    <div class="empty-icon">🏢</div>
+    <h3>Chưa có công ty nào</h3>
+    <p>Hãy thêm thông tin công ty đầu tiên của bạn</p>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Đang xử lý...</p>
+  </div>
+</div>

@@ -1,26 +1,72 @@
-<h2>Danh sách hóa đơn</h2>
+ <div class="container">
+      <h2>Danh sách hóa đơn</h2>
+      
+      <!-- Bộ lọc và tìm kiếm -->
+      <div class="filter-section">
+        <div class="search-box">
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm" 
+            placeholder="Tìm kiếm theo tên template..."
+            (keyup.enter)="searchInvoices()"
+          >
+          <button (click)="searchInvoices()" class="btn btn-search">🔍 Tìm kiếm</button>
+        </div>
+        
+        <div class="company-filter">
+          <label for="companyFilter">Lọc theo công ty:</label>
+          <select id="companyFilter" [(ngModel)]="selectedCompanyId" (change)="filterByCompany()">
+            <option value="">-- Tất cả công ty --</option>
+            <option value="1">Công ty A</option>
+            <option value="2">Công ty B</option>
+            <option value="3">Công ty C</option>
+          </select>
+        </div>
+        
+        <button (click)="loadAllInvoices()" class="btn btn-refresh">🔄 Làm mới</button>
+        <button (click)="createNewInvoice()" class="btn btn-primary">➕ Tạo hóa đơn mới</button>
+      </div>
 
-<table border="1" cellpadding="5">
-  <thead>
-    <tr>
-      <th>STT</th>
-      <th>Ngày tạo</th>
-      <th>Số dòng</th>
-      <th>Hành động</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let invoice of invoices; index as i">
-      <td>{{ i + 1 }}</td>
-      <td>{{ invoice.createdAt | date:'short' }}</td>
-      <td>{{ invoice.data.length }}</td>
-      <td>
-        <button (click)="viewInvoice(i)">Xem/Sửa</button>
-        <button (click)="deleteInvoice(i)">🗑 Xóa</button>
-      </td>
-      <td><a [routerLink]="['/invoice-detail', invoice.id]">Xem chi tiết</a></td>
-    </tr>
-  </tbody>
-</table>
+      <!-- Bảng danh sách -->
+      <table class="invoice-table" *ngIf="invoices.length > 0">
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>Tên Template</th>
+            <th>Người tạo</th>
+            <th>Ngày tạo</th>
+            <th>Công ty ID</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let invoice of invoices; index as i">
+            <td>{{ i + 1 }}</td>
+            <td>{{ invoice.templateName }}</td>
+            <td>{{ invoice.createdBy }}</td>
+            <td>{{ invoice.createdAt | date:'short' }}</td>
+            <td>{{ invoice.companyId }}</td>
+            <td class="actions">
+              <button (click)="viewInvoice(invoice.id!)" class="btn btn-view">👁️ Xem</button>
+              <button (click)="editInvoice(invoice.id!)" class="btn btn-edit">✏️ Sửa</button>
+              <button (click)="deleteInvoice(invoice.id!)" class="btn btn-delete">🗑️ Xóa</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-<p *ngIf="invoices.length === 0">Không có hóa đơn nào.</p>
+      <!-- Thông báo khi không có dữ liệu -->
+      <div *ngIf="invoices.length === 0 && !loading" class="no-data">
+        <p>Không có hóa đơn nào.</p>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loading" class="loading">
+        <p>Đang tải dữ liệu...</p>
+      </div>
+
+      <!-- Thông báo lỗi -->
+      <div *ngIf="errorMessage" class="error-message">
+        <p>{{ errorMessage }}</p>
+      </div>
+    </div>

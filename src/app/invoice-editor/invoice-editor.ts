@@ -2,7 +2,9 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angula
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
-import { NgIf } from '@angular/common';
+import { NgIf, NgFor } from '@angular/common';
+import { Company, CompanyService } from '../services/company.service';
+import { InvoiceType } from '../services/invoice-type.service';
 
 interface InvoiceTemplate {
   id: number;
@@ -12,10 +14,16 @@ interface InvoiceTemplate {
   createdAt: string | null;
 }
 
+interface TemplateOption {
+  id: string;
+  name: string;
+  content: string;
+}
+
 @Component({
   selector: 'app-invoice-editor',
   templateUrl: './invoice-editor.html',
-  imports: [NgIf],
+  imports: [NgIf, NgFor],
   standalone: true,
   styleUrls: ['./invoice-editor.css']
 })
@@ -34,27 +42,66 @@ export class InvoiceEditorComponent implements OnInit, AfterViewInit {
   watermarkOpacity = 0.3;
   watermarkImageUrl = '';
 
+  // Template and Company data
+  companies: Company[] = [];
+  selectedCompanyId: number | null = null;
+  selectedCompany: Company | null = null;
+  invoiceTypes: InvoiceType[] = [];
+  selectedInvoiceTypeId: number | null = null;
+  selectedInvoiceType: InvoiceType | null = null;
+  selectedTemplateId: string = 'template1';
+
+  // Predefined templates
+  templateOptions: TemplateOption[] = [
+    {
+      id: 'template1',
+      name: 'Template Cơ bản',
+      content: this.getBasicTemplate()
+    },
+    {
+      id: 'template2', 
+      name: 'Template Chuyên nghiệp',
+      content: this.getProfessionalTemplate()
+    },
+    {
+      id: 'template3',
+      name: 'Template Hiện đại',
+      content: this.getModernTemplate()
+    }
+  ];
+
   private readonly apiBaseUrl = 'http://localhost:8080/api/templates';
 
   constructor(
     private http: HttpClient,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private companyService: CompanyService
   ) {}
 
   ngOnInit(): void {
+    this.loadCompanies();
     this.checkModeAndLoadData();
   }
 
   ngAfterViewInit(): void {
-    // Đợi một chút để DOM render xong
     setTimeout(() => {
       this.initializeIframeContent();
     }, 100);
   }
 
+  private loadCompanies(): void {
+    this.companyService.getAllCompanies().subscribe({
+      next: (companies) => {
+        this.companies = companies;
+      },
+      error: (error) => {
+        console.error('Error loading companies:', error);
+      }
+    });
+  }
+
   private checkModeAndLoadData(): void {
-    // Kiểm tra route params trước
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.invoiceId = +params['id'];
@@ -64,7 +111,6 @@ export class InvoiceEditorComponent implements OnInit, AfterViewInit {
       }
     });
 
-    // Kiểm tra query params nếu không có route params
     this.route.queryParams.subscribe(queryParams => {
       if (queryParams['id'] && !this.invoiceId) {
         this.invoiceId = +queryParams['id'];
@@ -98,22 +144,26 @@ export class InvoiceEditorComponent implements OnInit, AfterViewInit {
 
   private initializeIframeContent(): void {
     if (!this.isEditMode) {
-      // Tạo nội dung mặc định cho chế độ CREATE
-      const defaultContent = this.getDefaultInvoiceContent();
-      this.loadContentToIframe(defaultContent);
+      const selectedTemplate = this.templateOptions.find(t => t.id === this.selectedTemplateId);
+      if (selectedTemplate) {
+        this.loadContentToIframe(selectedTemplate.content);
+      }
     }
   }
 
-  private getDefaultInvoiceContent(): string {
+  // Template methods
+  private getBasicTemplate(): string {
     return `
       <div style="padding: 20px; font-family: Arial, sans-serif;">
         <h1 style="text-align: center; color: #333;">HÓA ĐƠN BÁN HÀNG</h1>
         
-        <div style="margin: 20px 0;">
+        <div id="companyInfo" style="margin: 20px 0;">
           <h3>Thông tin công ty:</h3>
-          <p><strong>Tên công ty:</strong> [Nhập tên công ty]</p>
-          <p><strong>Địa chỉ:</strong> [Nhập địa chỉ]</p>
-          <p><strong>Điện thoại:</strong> [Nhập số điện thoại]</p>
+          <p><strong>Tên công ty:</strong> <span class="company-name">[Chọn công ty]</span></p>
+          <p><strong>Địa chỉ:</strong> <span class="company-address">[Địa chỉ công ty]</span></p>
+          <p><strong>Điện thoại:</strong> <span class="company-phone">[Số điện thoại]</span></p>
+          <p><strong>Email:</strong> <span class="company-email">[Email]</span></p>
+          <p><strong>Mã số thuế:</strong> <span class="company-tax">[Mã số thuế]</span></p>
         </div>
 
         <div style="margin: 20px 0;">
@@ -122,7 +172,7 @@ export class InvoiceEditorComponent implements OnInit, AfterViewInit {
           <p><strong>Địa chỉ:</strong> [Nhập địa chỉ khách hàng]</p>
         </div>
 
-        <table id="invoiceTable" style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <thead>
             <tr style="background-color: #f2f2f2;">
               <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">STT</th>
@@ -140,18 +190,11 @@ export class InvoiceEditorComponent implements OnInit, AfterViewInit {
               <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">100,000</td>
               <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">100,000</td>
             </tr>
-            <tr>
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">2</td>
-              <td style="border: 1px solid #ddd; padding: 8px;">Sản phẩm mẫu 2</td>
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">2</td>
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">50,000</td>
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">100,000</td>
-            </tr>
           </tbody>
           <tfoot>
             <tr style="background-color: #f9f9f9; font-weight: bold;">
               <td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: right;">Tổng cộng:</td>
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">200,000 VNĐ</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">100,000 VNĐ</td>
             </tr>
           </tfoot>
         </table>
@@ -170,6 +213,230 @@ export class InvoiceEditorComponent implements OnInit, AfterViewInit {
     `;
   }
 
+  private getProfessionalTemplate(): string {
+    return `
+      <div style="padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fff;">
+        <div style="border-bottom: 3px solid #2c3e50; padding-bottom: 20px; margin-bottom: 30px;">
+          <h1 style="text-align: center; color: #2c3e50; font-size: 28px; margin: 0;">HÓA ĐƠN BÁN HÀNG</h1>
+          <p style="text-align: center; color: #7f8c8d; margin-top: 5px;">SALES INVOICE</p>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+          <div id="companyInfo" style="flex: 1; margin-right: 20px;">
+            <h3 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px;">THÔNG TIN CÔNG TY</h3>
+            <p><strong>Công ty:</strong> <span class="company-name">[Chọn công ty]</span></p>
+            <p><strong>Địa chỉ:</strong> <span class="company-address">[Địa chỉ công ty]</span></p>
+            <p><strong>Điện thoại:</strong> <span class="company-phone">[Số điện thoại]</span></p>
+            <p><strong>Email:</strong> <span class="company-email">[Email]</span></p>
+            <p><strong>Mã số thuế:</strong> <span class="company-tax">[Mã số thuế]</span></p>
+          </div>
+          
+          <div style="flex: 1;">
+            <h3 style="color: #2c3e50; border-bottom: 2px solid #e74c3c; padding-bottom: 5px;">THÔNG TIN KHÁCH HÀNG</h3>
+            <p><strong>Khách hàng:</strong> [Nhập tên khách hàng]</p>
+            <p><strong>Địa chỉ:</strong> [Nhập địa chỉ khách hàng]</p>
+            <p><strong>Điện thoại:</strong> [Số điện thoại KH]</p>
+          </div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+          <thead>
+            <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+              <th style="border: none; padding: 15px; text-align: center;">STT</th>
+              <th style="border: none; padding: 15px; text-align: left;">Tên hàng hóa</th>
+              <th style="border: none; padding: 15px; text-align: center;">Số lượng</th>
+              <th style="border: none; padding: 15px; text-align: right;">Đơn giá</th>
+              <th style="border: none; padding: 15px; text-align: right;">Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background-color: #f8f9fa;">
+              <td style="border-bottom: 1px solid #dee2e6; padding: 12px; text-align: center;">1</td>
+              <td style="border-bottom: 1px solid #dee2e6; padding: 12px;">Sản phẩm chuyên nghiệp</td>
+              <td style="border-bottom: 1px solid #dee2e6; padding: 12px; text-align: center;">1</td>
+              <td style="border-bottom: 1px solid #dee2e6; padding: 12px; text-align: right;">150,000</td>
+              <td style="border-bottom: 1px solid #dee2e6; padding: 12px; text-align: right;">150,000</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr style="background-color: #2c3e50; color: white; font-weight: bold; font-size: 16px;">
+              <td colspan="4" style="border: none; padding: 15px; text-align: right;">TỔNG CỘNG:</td>
+              <td style="border: none; padding: 15px; text-align: right;">150,000 VNĐ</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div style="margin-top: 50px; display: flex; justify-content: space-between;">
+          <div style="text-align: center; border: 1px solid #ddd; padding: 20px; border-radius: 5px;">
+            <p style="font-weight: bold; color: #2c3e50;">NGƯỜI MUA HÀNG</p>
+            <p style="margin-top: 70px; font-style: italic;">(Ký, ghi rõ họ tên)</p>
+          </div>
+          <div style="text-align: center; border: 1px solid #ddd; padding: 20px; border-radius: 5px;">
+            <p style="font-weight: bold; color: #2c3e50;">NGƯỜI BÁN HÀNG</p>
+            <p style="margin-top: 70px; font-style: italic;">(Ký, ghi rõ họ tên)</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private getModernTemplate(): string {
+    return `
+      <div style="padding: 40px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+        <div style="background: white; border-radius: 15px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 32px; font-weight: 700; margin: 0;">HÓA ĐƠN BÁN HÀNG</h1>
+            <div style="width: 100px; height: 4px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 10px auto; border-radius: 2px;"></div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
+            <div id="companyInfo" style="background: #f8f9fa; padding: 25px; border-radius: 10px; border-left: 4px solid #667eea;">
+              <h3 style="color: #2c3e50; font-size: 18px; margin-bottom: 15px; font-weight: 600;">🏢 THÔNG TIN CÔNG TY</h3>
+              <div style="space-y: 8px;">
+                <p style="margin: 8px 0;"><strong>Công ty:</strong> <span class="company-name">[Chọn công ty]</span></p>
+                <p style="margin: 8px 0;"><strong>Địa chỉ:</strong> <span class="company-address">[Địa chỉ công ty]</span></p>
+                <p style="margin: 8px 0;"><strong>Điện thoại:</strong> <span class="company-phone">[Số điện thoại]</span></p>
+                <p style="margin: 8px 0;"><strong>Email:</strong> <span class="company-email">[Email]</span></p>
+                <p style="margin: 8px 0;"><strong>Mã số thuế:</strong> <span class="company-tax">[Mã số thuế]</span></p>
+              </div>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 25px; border-radius: 10px; border-left: 4px solid #764ba2;">
+              <h3 style="color: #2c3e50; font-size: 18px; margin-bottom: 15px; font-weight: 600;">👤 THÔNG TIN KHÁCH HÀNG</h3>
+              <div style="space-y: 8px;">
+                <p style="margin: 8px 0;"><strong>Khách hàng:</strong> [Nhập tên khách hàng]</p>
+                <p style="margin: 8px 0;"><strong>Địa chỉ:</strong> [Nhập địa chỉ khách hàng]</p>
+                <p style="margin: 8px 0;"><strong>Điện thoại:</strong> [Số điện thoại KH]</p>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #f8f9fa; border-radius: 10px; overflow: hidden; margin: 30px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                  <th style="padding: 20px; text-align: center; font-weight: 600;">STT</th>
+                  <th style="padding: 20px; text-align: left; font-weight: 600;">Tên hàng hóa</th>
+                  <th style="padding: 20px; text-align: center; font-weight: 600;">Số lượng</th>
+                  <th style="padding: 20px; text-align: right; font-weight: 600;">Đơn giá</th>
+                  <th style="padding: 20px; text-align: right; font-weight: 600;">Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="background: white; border-bottom: 1px solid #e0e6ed;">
+                  <td style="padding: 15px; text-align: center;">1</td>
+                  <td style="padding: 15px;">Sản phẩm hiện đại</td>
+                  <td style="padding: 15px; text-align: center;">1</td>
+                  <td style="padding: 15px; text-align: right;">200,000</td>
+                  <td style="padding: 15px; text-align: right;">200,000</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white;">
+                  <td colspan="4" style="padding: 20px; text-align: right; font-weight: 700; font-size: 16px;">TỔNG CỘNG:</td>
+                  <td style="padding: 20px; text-align: right; font-weight: 700; font-size: 16px;">200,000 VNĐ</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 60px;">
+            <div style="text-align: center; background: #f8f9fa; padding: 30px; border-radius: 10px; border: 2px dashed #667eea;">
+              <p style="font-weight: 700; color: #2c3e50; font-size: 16px; margin-bottom: 20px;">👤 NGƯỜI MUA HÀNG</p>
+              <div style="height: 80px;"></div>
+              <p style="font-style: italic; color: #6c757d;">(Ký, ghi rõ họ tên)</p>
+            </div>
+            <div style="text-align: center; background: #f8f9fa; padding: 30px; border-radius: 10px; border: 2px dashed #764ba2;">
+              <p style="font-weight: 700; color: #2c3e50; font-size: 16px; margin-bottom: 20px;">👔 NGƯỜI BÁN HÀNG</p>
+              <div style="height: 80px;"></div>
+              <p style="font-style: italic; color: #6c757d;">(Ký, ghi rõ họ tên)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Event handlers
+  onTemplateChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.selectedTemplateId = select.value;
+    
+    const selectedTemplate = this.templateOptions.find(t => t.id === this.selectedTemplateId);
+    if (selectedTemplate) {
+      this.loadContentToIframe(selectedTemplate.content);
+      // Update company info if a company is selected
+      if (this.selectedCompany) {
+        setTimeout(() => this.updateCompanyInfo(), 100);
+      }
+    }
+  }
+
+  onInvoiceTypeChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.selectedInvoiceTypeId = select.value ? +select.value : null;
+    
+    if (this.selectedInvoiceTypeId) {
+      this.selectedInvoiceTypeId = this.invoiceTypes.find(c => c.id === this.selectedCompanyId) || null;
+      this.updateCompanyInfo();
+    }
+  }
+  
+
+
+  onCompanyChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.selectedCompanyId = select.value ? +select.value : null;
+    
+    if (this.selectedCompanyId) {
+      this.selectedCompany = this.companies.find(c => c.id === this.selectedCompanyId) || null;
+      this.updateCompanyInfo();
+    } else {
+      this.selectedCompany = null;
+      this.clearCompanyInfo();
+    }
+  }
+  
+
+  private updateCompanyInfo(): void {
+    if (!this.iframe?.nativeElement || !this.selectedCompany) return;
+
+    const iframeDoc = this.iframe.nativeElement.contentDocument;
+    if (!iframeDoc) return;
+
+    // Update company information in the iframe
+    const companyName = iframeDoc.querySelector('.company-name');
+    const companyAddress = iframeDoc.querySelector('.company-address');
+    const companyPhone = iframeDoc.querySelector('.company-phone');
+    const companyEmail = iframeDoc.querySelector('.company-email');
+    const companyTax = iframeDoc.querySelector('.company-tax');
+
+    if (companyName) companyName.textContent = this.selectedCompany.name;
+    if (companyAddress) companyAddress.textContent = this.selectedCompany.address;
+    if (companyPhone) companyPhone.textContent = this.selectedCompany.phone;
+    if (companyEmail) companyEmail.textContent = this.selectedCompany.email;
+    if (companyTax) companyTax.textContent = this.selectedCompany.taxCode;
+  }
+
+  private clearCompanyInfo(): void {
+    if (!this.iframe?.nativeElement) return;
+
+    const iframeDoc = this.iframe.nativeElement.contentDocument;
+    if (!iframeDoc) return;
+
+    const companyName = iframeDoc.querySelector('.company-name');
+    const companyAddress = iframeDoc.querySelector('.company-address');
+    const companyPhone = iframeDoc.querySelector('.company-phone');
+    const companyEmail = iframeDoc.querySelector('.company-email');
+    const companyTax = iframeDoc.querySelector('.company-tax');
+
+    if (companyName) companyName.textContent = '[Chọn công ty]';
+    if (companyAddress) companyAddress.textContent = '[Địa chỉ công ty]';
+    if (companyPhone) companyPhone.textContent = '[Số điện thoại]';
+    if (companyEmail) companyEmail.textContent = '[Email]';
+    if (companyTax) companyTax.textContent = '[Mã số thuế]';
+  }
+
   private loadContentToIframe(htmlContent: string): void {
     if (!this.iframe?.nativeElement) {
       setTimeout(() => this.loadContentToIframe(htmlContent), 100);
@@ -185,7 +452,6 @@ export class InvoiceEditorComponent implements OnInit, AfterViewInit {
       iframeDoc.write(fullHtmlContent);
       iframeDoc.close();
 
-      // Setup các chức năng sau khi load xong
       iframe.onload = () => {
         this.setupIframeFeatures();
       };
@@ -245,16 +511,14 @@ export class InvoiceEditorComponent implements OnInit, AfterViewInit {
   }
 
   private setupIframeFeatures(): void {
-    // Setup table resize nếu cần
     this.setupTableResize();
   }
 
   private setupTableResize(): void {
-    // Implement table resize functionality if needed
     console.log('Table resize setup');
   }
 
-  // Public methods for template
+  // Watermark methods
   onWatermarkUpload(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -287,13 +551,11 @@ export class InvoiceEditorComponent implements OnInit, AfterViewInit {
     const iframeDoc = this.iframe.nativeElement.contentDocument;
     if (!iframeDoc) return;
 
-    // Remove existing watermark
     const existingWatermark = iframeDoc.querySelector('.watermark');
     if (existingWatermark) {
       existingWatermark.remove();
     }
 
-    // Create new watermark
     const watermark = iframeDoc.createElement('img');
     watermark.src = this.watermarkImageUrl;
     watermark.className = 'watermark';

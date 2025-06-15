@@ -12,38 +12,84 @@
         <p>{{ errorMessage }}</p>
     </div>
 
-
     <div class="main-layout">
-
         <!-- Controls Panel -->
         <div class="controls-panel">
+            <!-- Template Selection -->
             <div class="control-group">
-                <label for="watermarkUpload">
-                    <span>Upload Watermark:</span>
-                    <input type="file" id="watermarkUpload" accept="image/*" (change)="onWatermarkUpload($event)">
+                <label for="templateSelect">
+                    <span>📋 Chọn Template:</span>
+                    <select id="templateSelect" [value]="selectedTemplateId" (change)="onTemplateChange($event)" [disabled]="isEditMode">
+                        <option *ngFor="let template of templateOptions" [value]="template.id">
+                            {{ template.name }}
+                        </option>
+                    </select>
                 </label>
             </div>
 
+            <!-- Company Selection -->
             <div class="control-group">
-                <label for="sizeRange">
-                    <span>Kích thước:</span>
-                    <input type="range" id="sizeRange" min="50" max="500" [value]="watermarkSize"
-                        (input)="onSizeChange($event)">
-                    <span class="value-display">{{ watermarkSize }}px</span>
+                <label for="companySelect">
+                    <span>🏢 Chọn Công ty:</span>
+                    <select id="companySelect" [value]="selectedCompanyId || ''" (change)="onCompanyChange($event)">
+                        <option value="">-- Chọn công ty --</option>
+                        <option *ngFor="let company of companies" [value]="company.id">
+                            {{ company.name }}
+                        </option>
+                    </select>
                 </label>
             </div>
 
-            <div class="control-group">
-                <label for="opacityRange">
-                    <span>Độ mờ:</span>
-                    <input type="range" id="opacityRange" min="0" max="1" step="0.05" [value]="watermarkOpacity"
-                        (input)="onOpacityChange($event)">
-                    <span class="value-display">{{ watermarkOpacity }}</span>
-                </label>
+            <!-- Selected Company Info -->
+            <div *ngIf="selectedCompany" class="selected-company-info">
+                <h4>ℹ️ Thông tin công ty đã chọn:</h4>
+                <div class="company-details">
+                    <p><strong>Tên:</strong> {{ selectedCompany.name }}</p>
+                    <p><strong>Địa chỉ:</strong> {{ selectedCompany.address }}</p>
+                    <p><strong>SĐT:</strong> {{ selectedCompany.phone }}</p>
+                    <p><strong>Email:</strong> {{ selectedCompany.email }}</p>
+                    <p><strong>MST:</strong> {{ selectedCompany.taxCode }}</p>
+                </div>
+            </div>
+
+            <!-- Watermark Controls -->
+            <div class="watermark-section">
+                <h4>🖼️ Watermark</h4>
+                
+                <div class="control-group">
+                    <label for="watermarkUpload">
+                        <span>Upload Watermark:</span>
+                        <input type="file" id="watermarkUpload" accept="image/*" (change)="onWatermarkUpload($event)">
+                    </label>
+                </div>
+
+                <div class="control-group">
+                    <label for="sizeRange">
+                        <span>Kích thước:</span>
+                        <input type="range" id="sizeRange" min="50" max="500" [value]="watermarkSize"
+                            (input)="onSizeChange($event)">
+                        <span class="value-display">{{ watermarkSize }}px</span>
+                    </label>
+                </div>
+
+                <div class="control-group">
+                    <label for="opacityRange">
+                        <span>Độ mờ:</span>
+                        <input type="range" id="opacityRange" min="0" max="1" step="0.05" [value]="watermarkOpacity"
+                            (input)="onOpacityChange($event)">
+                        <span class="value-display">{{ watermarkOpacity }}</span>
+                    </label>
+                </div>
+
+                <div class="control-group">
+                    <button type="button" class="btn btn-reset-watermark" (click)="resetWatermark()" [disabled]="isLoading">
+                        🗑️ Xóa watermark
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Invoice Content Iframe -->
+        <!-- Invoice Content -->
         <div class="document-container">
             <!-- Action Buttons -->
             <div class="action-buttons">
@@ -51,21 +97,15 @@
                     🖨️ In hóa đơn
                 </button>
 
-                <button type="button" class="btn btn-reset" (click)="resetWatermark()" [disabled]="isLoading">
-                    🗑️ Xóa watermark
-                </button>
-
                 <button type="button" class="btn btn-save" (click)="saveInvoice()" [disabled]="isLoading">
                     {{ saveButtonText }}
                 </button>
             </div>
+            
             <div class="iframe-container">
                 <iframe #invoiceIframe class="invoice-iframe" [style.display]="isLoading ? 'none' : 'block'">
                 </iframe>
             </div>
-
-            
         </div>
-
     </div>
 </div>

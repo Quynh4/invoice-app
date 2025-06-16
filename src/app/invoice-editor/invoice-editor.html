@@ -19,9 +19,9 @@
             <div class="control-group">
                 <label for="templateSelect">
                     <span>📋 Chọn Template:</span>
-                    <select id="templateSelect" [value]="selectedTemplateId" (change)="onTemplateChange($event)" [disabled]="isEditMode">
-                        <option *ngFor="let template of templateOptions" [value]="template.id">
-                            {{ template.name }}
+                    <select id="templateSelect" [value]="selectedInvoiceTypeId" (change)="onInvoiceTypeChange($event)" [disabled]="isEditMode">
+                        <option *ngFor="let invoiceType of invoiceTypes" [value]="invoiceType.id">
+                            {{ invoiceType.typeName }}
                         </option>
                     </select>
                 </label>

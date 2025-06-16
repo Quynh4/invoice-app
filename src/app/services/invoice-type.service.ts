@@ -13,18 +13,18 @@ export interface InvoiceType {
 @Injectable({
   providedIn: 'root'
 })
-export class InvoiceService {
+export class InvoiceTypeService {
   private apiUrl = 'http://localhost:8080/api/types';
 
   constructor(private http: HttpClient) {}
 
   // Lấy tất cả hóa đơn
-  getAllInvoices(): Observable<InvoiceType[]> {
+  getAllInvoiceTypes(): Observable<InvoiceType[]> {
     return this.http.get<InvoiceType[]>(this.apiUrl);
   }
 
   // Lấy hóa đơn theo ID
-  getInvoiceById(id: number): Observable<InvoiceType> {
+  getInvoiceTypeById(id: number): Observable<InvoiceType> {
     return this.http.get<InvoiceType>(`${this.apiUrl}/${id}`);
   }
 
